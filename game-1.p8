@@ -8,6 +8,7 @@ local enemies
 
 local game_objects={}
 
+local bomb_is_deployed = false
 local global_timer = 0
 
 function _init()
@@ -113,7 +114,7 @@ function make_protag(x,y,width,height)
 		draw=function(self)
 
 			if self.is_stuck == true then
-				print("oh no!",self.x+self.width+2,self.y-4)
+				print("oh no!",self.x+self.width+2,self.y-4,7)
 			end
 			spr(48,self.x,self.y)
 
@@ -256,7 +257,6 @@ function make_bomb(x,y,dropped_while_player_facing)
 		dropped_while_player_facing=dropped_while_player_facing,
 		exploding=false,
 		colliding_with_wall=false,
-		new_bomb=true,
 		update=function(self)
 
 			player_x_orig = player.x
@@ -266,7 +266,6 @@ function make_bomb(x,y,dropped_while_player_facing)
 			local w
 			for w in all(walls) do
 				while are_object_rects_colliding(self, w)==true do
-					self.colliding_with_wall=true
 					if self.dropped_while_player_facing==0 then
 						self.x += 1
 						if are_object_rects_colliding(self,player) and not player.is_stuck then
