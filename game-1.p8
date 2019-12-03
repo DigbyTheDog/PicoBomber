@@ -41,7 +41,6 @@ function _update()
 		obj:update()
 	end
 
-	for enemy in all(enemies) do
 	update_global_timer()
 	
 end
@@ -108,14 +107,22 @@ function make_protag(x,y,width,height)
 
 	local player = make_game_object(x,y,width,height,
 	{
-		name = "bomberman",
-		facing = 1, -- 0123 = lrud
-		draw = function(self)
+		name="bomberman",
+		facing=1, -- 0123 = lrud
+		is_stuck=false,
+		draw=function(self)
 
+			if self.is_stuck == true then
+				print("oh no!",self.x+self.width+2,self.y-4)
+			end
 			spr(48,self.x,self.y)
 
 		end,
-		update = function(self)
+		update=function(self)
+
+			if self.is_stuck == true then
+				return
+			end
 
 			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
 			-- TODO: it feels bad to stop when two keys are held, actually.
@@ -248,20 +255,45 @@ function make_bomb(x,y,dropped_while_player_facing)
 		starting_time=global_timer,
 		dropped_while_player_facing=dropped_while_player_facing,
 		exploding=false,
+		colliding_with_wall=false,
+		new_bomb=true,
 		update=function(self)
+
+			player_x_orig = player.x
+			player_y_orig = player.y
 
 			-- ensure bomb does not get stuck in wall
 			local w
 			for w in all(walls) do
 				while are_object_rects_colliding(self, w)==true do
+					self.colliding_with_wall=true
 					if self.dropped_while_player_facing==0 then
 						self.x += 1
+						if are_object_rects_colliding(self,player) and not player.is_stuck then
+							player.x += 1
+						end
 					elseif self.dropped_while_player_facing==1 then
 						self.x -= 1
+						if are_object_rects_colliding(self,player) and not player.is_stuck then
+							player.x -= 1
+						end
 					elseif self.dropped_while_player_facing==2 then
 						self.y += 1
+						if are_object_rects_colliding(self,player) and not player.is_stuck then
+							player.y += 1
+						end
 					elseif self.dropped_while_player_facing==3 then
 						self.y -= 1
+						if are_object_rects_colliding(self,player) and not player.is_stuck then
+							player.y -= 1
+						end
+					end
+					for w in all(walls) do
+						if are_object_rects_colliding(w,player) then
+							player.is_stuck = true
+							player.x = player_x_orig
+							player.y = player_y_orig
+						end
 					end
 				end
 			end
@@ -279,7 +311,9 @@ function make_bomb(x,y,dropped_while_player_facing)
 				self.exploding = true
 			end
 
-			player:check_for_collision_with_wall(self)
+			if player.is_stuck==false then
+				player:check_for_collision_with_wall(self)
+			end
 
 		end,
 		draw=function(self)
@@ -373,14 +407,14 @@ function make_enemy(x,y,width,height)
 		draw=function(self)
 
 			if global_timer==29 then
-				if enemysprite==4 then
-					enemysprite=3
+				if self.enemysprite==4 then
+					self.enemysprite=3
 				elseif enemysprite==3 then
-					enemysprite=4
+					self.enemysprite=4
 				end
 			end
 
-			spr(enemysprite,self.x,self.y,1,1,facing_right)
+			spr(self.enemysprite,self.x,self.y,1,1,facing_right)
 
 		end
 	})
