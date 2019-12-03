@@ -9,7 +9,6 @@ local enemies
 local game_objects={}
 
 local global_timer = 0
-local enemysprite = 3
 
 function _init()
 
