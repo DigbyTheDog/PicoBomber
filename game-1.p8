@@ -17,21 +17,21 @@ function _init()
 		make_enemy(90,64)
 	}
 	walls={
-		make_wall(16,16,true),
-		make_wall(24,16),
-		make_wall(8,8)
+		make_wall(16,16,8,8,true),
+		make_wall(24,16,8,8),
+		make_wall(8,8,8,8)
 	}
 
 	for i = 0,16,1 
 	do 
-		add(walls, make_wall(0, i*8))
+		add(walls, make_wall(0,i*8,8,8))
 		if i > 0 then
-			add(walls, make_wall(i*8, 0))
+			add(walls, make_wall(i*8,0,8,8))
 		end
 	end
 
 	bombs={}
-	init_protag()
+	player = make_protag(64,64,8,8)
 
 end
 
@@ -112,27 +112,42 @@ function are_rects_overlapping(left1,top1,right1,bottom1,left2,top2,right2,botto
 
 end
 
-function are_object_rects_colliding(first, second)
+function are_object_rects_colliding(first,second)
 
 	return are_rects_overlapping(first.x,first.y,first.x+first.width,first.y+first.height,second.x,second.y,second.x+second.width,second.y+second.height)
 
 end
 
-function init_protag()
+function make_game_object(x,y,width,height,properties)
 
-	player = {
-		name="bomberman",
-		x=64,
-		y=64,
-		width=8,
-		height=8,
-		facing=1, -- 0123 = lrud
-		draw=function(self)
+	local obj = {
+		x=x,
+		y=y,
+		width=width,
+		height=height
+	}
+
+	local k,v
+	for k,v in pairs(properties) do
+		obj[k] = v
+	end
+
+	return obj
+
+end
+
+function make_protag(x,y,width,height)
+
+	local player = make_game_object(x,y,width,height,
+	{
+		name = "bomberman",
+		facing = 1, -- 0123 = lrud
+		draw = function(self)
 
 			spr(48,self.x,self.y)
 
 		end,
-		update=function(self)
+		update = function(self)
 
 			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
 			-- TODO: it feels bad to stop when two keys are held, actually.
@@ -152,25 +167,24 @@ function init_protag()
 						
 			if btnp(4) then -- space ?
 
-				local bomb_x = player.x
-				local bomb_y = player.y
+				local bomb_x = self.x
+				local bomb_y = self.y
 
 				if self.facing == 0 then
-					bomb_x = player.x - 8
+					bomb_x = self.x - 8
 				elseif self.facing == 1 then
-					bomb_x = player.x + 8
+					bomb_x = self.x + 8
 				elseif self.facing == 2 then
-					bomb_y = player.y - 8
+					bomb_y = self.y - 8
 				elseif self.facing == 3 then
-					bomb_y = player.y + 8
+					bomb_y = self.y + 8
 				end
 
 				add(bombs, make_bomb(bomb_x,bomb_y,self.facing))
-
 			end
 
 		end,
-		check_for_collision_with_wall=function(self,wall)
+		check_for_collision_with_wall = function(self,wall)
 
 			local x,y,w,h = self.x,self.y,self.width,self.height
 
@@ -216,18 +230,17 @@ function init_protag()
 			end
 
 		end
-	}
+	})
+
+	return player
 
 end
 
-function make_wall(x,y,bombable)
+function make_wall(x,y,width,height,bombable)
 	
-	local wall={
+	local wall = make_game_object(x,y,width,height,
+	{
 		name="wall",
-		x=x,
-		y=y,
-		width=8,
-		height=8,
 		bombable=bombable,
 		update=function(self)
 
@@ -251,19 +264,17 @@ function make_wall(x,y,bombable)
 			end
 
 		end
-	}
+	})
+
 	return wall
 
 end
 
 function make_bomb(x,y,dropped_while_player_facing)
 	
-	local bomb = {
+	local bomb = make_game_object(x,y,8,8,
+	{
 		name="bomb",
-		x=x,
-		y=y,
-		width=8,
-		height=8,
 		seconds_since_bomb_deployed=0,
 		starting_time=global_timer,
 		dropped_while_player_facing=dropped_while_player_facing,
@@ -336,20 +347,17 @@ function make_bomb(x,y,dropped_while_player_facing)
 			end
 
 		end
-
-	}
+	})
+	
 	return bomb
 
 end
 
-function make_enemy(x,y)
+function make_enemy(x,y,width,height)
 
-	local enemy={
+	local enemy = make_game_object(x,y,8,8,
+	{
 		name="enemy",
-		x=x,
-		y=y,
-		width=8,
-		height=8,
 		enemysprite=3,
 		movement_dir=0,
 		facing_right=false,
@@ -405,7 +413,7 @@ function make_enemy(x,y)
 			spr(enemysprite,self.x,self.y,1,1,facing_right)
 
 		end
-	}
+	})
 
 	return enemy
 
