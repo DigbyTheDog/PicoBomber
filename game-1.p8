@@ -6,7 +6,7 @@ local player
 local walls
 local enemies
 
-local game_objects
+local game_objects={}
 
 local global_timer = 0
 local enemysprite = 3
@@ -42,23 +42,7 @@ function _update()
 		obj:update()
 	end
 
-	player:update()
-
-	local enemy
 	for enemy in all(enemies) do
-		enemy:update()
-	end
-
-	local wall
-	for wall in all(walls) do
-		wall:update()
-	end
-
-	local bomb
-	for bomb in all(bombs) do
-		bomb:update()
-	end
-
 	update_global_timer()
 	
 end
@@ -71,23 +55,6 @@ function _draw()
 	for obj in all(game_objects) do
 		obj:draw()
 	end
-
-	local enemy
-	for enemy in all(enemies) do
-		enemy:draw()
-	end
-
-	local wall
-	for wall in all(walls) do
-		wall:draw()
-	end
-
-	local bomb
-	for bomb in all(bombs) do
-		bomb:draw()
-	end
-
-	player:draw()
 	
 end
 
@@ -124,14 +91,16 @@ function make_game_object(x,y,width,height,properties)
 		x=x,
 		y=y,
 		width=width,
-		height=height
+		height=height,
+		draw=function(self)
+		end
 	}
 
 	local k,v
 	for k,v in pairs(properties) do
 		obj[k] = v
 	end
-
+	add(game_objects, obj)
 	return obj
 
 end
@@ -250,6 +219,7 @@ function make_wall(x,y,width,height,bombable)
 				for b in all(bombs) do
 					if b.exploding==true and b:check_for_collision_with_other_object(self)==true then
 						del(walls, self)
+						del(game_objects, self)
 					end
 				end
 			end
@@ -302,8 +272,9 @@ function make_bomb(x,y,dropped_while_player_facing)
 			end
 
 			if self.exploding==true then
-				if self.seconds_since_bomb_deployed==5 then
+				if self.seconds_since_bomb_deployed>=5 then
 					del(bombs, self)
+					del(game_objects, self)
 				end
 			elseif self.seconds_since_bomb_deployed==4 then
 				self.exploding = true
