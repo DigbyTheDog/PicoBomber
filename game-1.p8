@@ -3,34 +3,25 @@ version 18
 __lua__
 
 local player
-local walls
-local enemies
-
 local game_objects={}
-
 local bomb_is_deployed = false
 local global_timer = 0
 
 function _init()
 
-	enemies={
-		make_enemy(90,64)
-	}
-	walls={
-		make_wall(16,16,8,8,true),
-		make_wall(24,16,8,8),
-		make_wall(8,8,8,8)
-	}
+	make_enemy(90,64)
+	make_wall(16,16,8,8,true)
+	make_wall(24,16,8,8)
+	make_wall(8,8,8,8)
 
 	for i = 0,16,1 
 	do 
-		add(walls, make_wall(0,i*8,8,8))
+		make_wall(0,i*8,8,8)
 		if i > 0 then
-			add(walls, make_wall(i*8,0,8,8))
+			make_wall(i*8,0,8,8)
 		end
 	end
 
-	bombs={}
 	player = make_protag(64,64,8,8)
 
 end
@@ -111,12 +102,15 @@ function make_protag(x,y,width,height)
 		name="bomberman",
 		facing=1, -- 0123 = lrud
 		is_stuck=false,
+		moving=false,
+		current_sprite=48,
 		draw=function(self)
 
 			if self.is_stuck == true then
 				print("oh no!",self.x+self.width+2,self.y-4,7)
 			end
-			spr(48,self.x,self.y)
+
+			spr(self.current_sprite,self.x,self.y)
 
 		end,
 		update=function(self)
@@ -127,17 +121,22 @@ function make_protag(x,y,width,height)
 
 			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
 			-- TODO: it feels bad to stop when two keys are held, actually.
+			self.moving=false
 			if btn(0) and not (btn(1) or btn(2) or btn(3)) then -- left
 				self.facing = 0
+				self.moving = true
 				self.x -= 1
 			elseif btn(1) and not (btn(0) or btn(2) or btn(3)) then -- right
 				self.facing = 1
+				self.moving = true
 				self.x += 1
 			elseif btn(3) and not (btn(1) or btn(2) or btn(0)) then -- down
 				self.facing = 3
+				self.moving = true
 				self.y += 1
 			elseif btn(2) and not (btn(0) or btn(1) or btn(3)) then -- up
 				self.facing = 2
+				self.moving = true
 				self.y -= 1
 			end
 						
@@ -157,7 +156,7 @@ function make_protag(x,y,width,height)
 				end
 
 				if bomb_is_deployed == false then
-					add(bombs, make_bomb(bomb_x,bomb_y,self.facing))
+					make_bomb(bomb_x,bomb_y,self.facing)
 					bomb_is_deployed = true
 				end
 			end
@@ -226,9 +225,8 @@ function make_wall(x,y,width,height,bombable)
 			player:check_for_collision_with_wall(self)
 			if self.bombable==true then
 				local b
-				for b in all(bombs) do
-					if b.exploding==true and b:check_for_collision_with_other_object(self)==true then
-						del(walls, self)
+				for b in all(game_objects) do
+					if b.name == "bomb" and b.exploding==true and b:check_for_collision_with_other_object(self)==true then
 						del(game_objects, self)
 					end
 				end
@@ -267,8 +265,8 @@ function make_bomb(x,y,dropped_while_player_facing)
 
 			-- ensure bomb does not get stuck in wall
 			local w
-			for w in all(walls) do
-				while are_object_rects_colliding(self, w)==true do
+			for w in all(game_objects) do
+				while w.name=="wall" and are_object_rects_colliding(self, w)==true do
 					if self.dropped_while_player_facing==0 then
 						self.x += 1
 						if are_object_rects_colliding(self,player) and not player.is_stuck then
@@ -290,8 +288,8 @@ function make_bomb(x,y,dropped_while_player_facing)
 							player.y -= 1
 						end
 					end
-					for w in all(walls) do
-						if are_object_rects_colliding(w,player) then
+					for w in all(game_objects) do
+						if w.name=="wall" and are_object_rects_colliding(w,player) then
 							player.is_stuck = true
 							player.x = player_x_orig
 							player.y = player_y_orig
@@ -305,12 +303,11 @@ function make_bomb(x,y,dropped_while_player_facing)
 			end
 
 			if self.exploding==true then
-				if self.seconds_since_bomb_deployed>=5 then
-					del(bombs, self)
+				if self.seconds_since_bomb_deployed>=4 then
 					del(game_objects, self)
 					bomb_is_deployed = false
 				end
-			elseif self.seconds_since_bomb_deployed==4 then
+			elseif self.seconds_since_bomb_deployed==3 then
 				self.exploding = true
 			end
 
@@ -365,11 +362,18 @@ function make_enemy(x,y,width,height)
 	local enemy = make_game_object(x,y,8,8,
 	{
 		name="enemy",
-		enemysprite=3,
+		current_sprite=3,
 		movement_dir=0,
 		facing_right=false,
 		speed=0.5,
+		dying=false,
 		update=function(self)
+
+			if self.dying==true then
+				return
+			end
+
+			self:check_for_being_exploded()
 
 			if self.x%8 == 0 and self.y%8==0 and flr(rnd(5))==4 then
 				self.movement_dir=flr(rnd(4))
@@ -388,8 +392,8 @@ function make_enemy(x,y,width,height)
 			end
 
 			local wall
-			for wall in all(walls) do
-				if are_object_rects_colliding(wall,self) then
+			for wall in all(game_objects) do
+				if (wall.name=="wall" or wall.name=="bomb") and are_object_rects_colliding(wall,self) then
 					if self.movement_dir==0 then
 						self.x += self.speed
 						self.movement_dir = 1
@@ -407,17 +411,29 @@ function make_enemy(x,y,width,height)
 			end
 
 		end,
-		draw=function(self)
+		check_for_being_exploded=function(self)
 
-			if global_timer==29 then
-				if self.enemysprite==4 then
-					self.enemysprite=3
-				elseif enemysprite==3 then
-					self.enemysprite=4
+			if bomb_is_deployed==true then
+				local b
+				for b in all(game_objects) do
+					if b.name == "bomb" and b.exploding==true and b:check_for_collision_with_other_object(self)==true then
+						self.dying=true
+					end
 				end
 			end
 
-			spr(self.enemysprite,self.x,self.y,1,1,facing_right)
+		end,
+		draw=function(self)
+
+			if global_timer==29 or global_timer==14 then
+				if self.current_sprite==3 then
+					self.current_sprite=4
+				else 
+					self.current_sprite=3
+				end
+			end
+
+			spr(self.current_sprite,self.x,self.y,1,1,facing_right)
 
 		end
 	})
@@ -452,11 +468,11 @@ __gfx__
 5ddddd00889999888889988888888888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 5ddddd00898998988889988888888888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 05555000988998898889988888888888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-07777770077777700777777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-7f5ff5f707ff5f570777f5f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-07777770077777700777777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00cccc0000cccc0000cccc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00cccc0000cccc0000cccc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0ecccce000eccc0000cecc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00c00c00000c0c000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00c00c00000cc0000000cc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+07777770077777700777777007777770077777700000000000000000077777700777777007777770000000000000000000000000000000000000000000000000
+7f5ff5f77f5ff5f77f5ff5f707ff5f570777f5f0000000000000000007ff5f570777f5f077777777000000000000000000000000000000000000000000000000
+07777770077777700777777007777770077777700000000000000000077777700777777007777770000000000000000000000000000000000000000000000000
+00cccc0000cccc0000cccc0000cccc0000cccc00000000000000000000cccc0000cccc0000cccc00000000000000000000000000000000000000000000000000
+00cccc0000cccc0000cccce000cccc0000cccc00000000000000000000cccc0000cccc0000cccc00000000000000000000000000000000000000000000000000
+0ecccce00ecccce000ddcc0000eccc0000cecc00000000000000000000eccc0000cecc000ecccce0000000000000000000000000000000000000000000000000
+00c00c0000c00c000edd0c00000c0c000000c0000000000000000000000c0c000000c00000c00c00000000000000000000000000000000000000000000000000
+00c00c0000dd0c0000000c00000cc0000000cc000000000000000000000cc0000000cc0000c00c00000000000000000000000000000000000000000000000000
