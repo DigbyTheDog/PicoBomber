@@ -75,6 +75,17 @@ function are_object_rects_colliding(first,second)
 
 end
 
+function for_each_game_object(name,callback)
+
+	local obj
+	for obj in all(game_objects) do
+		if obj.name==name then
+			callback(obj)
+		end
+	end
+
+end
+
 function make_game_object(x,y,width,height,properties)
 
 	local obj = {
@@ -83,8 +94,18 @@ function make_game_object(x,y,width,height,properties)
 		width=width,
 		height=height,
 		dying=false,
-		draw=function(self)
-		end
+		check_for_being_exploded=function(self)
+
+			if bomb_is_deployed==true then
+				local b
+				for b in all(game_objects) do
+					if b.name == "bomb" and b.exploding==true and b:check_for_collision_with_other_object(self)==true then
+						self.dying=true
+					end
+				end
+			end
+
+		end,
 	}
 
 	local k,v
@@ -116,9 +137,11 @@ function make_protag(x,y,width,height)
 		end,
 		update=function(self)
 
-			if self.is_stuck == true then
+			if self.is_stuck == true or self.dying==true then
 				return
 			end
+
+			self:check_for_being_exploded()
 
 			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
 			-- TODO: it feels bad to stop when two keys are held, actually.
@@ -420,18 +443,6 @@ function make_enemy(x,y,width,height)
 			end
 
 			self.bomb_placed_on_enemy=false
-
-		end,
-		check_for_being_exploded=function(self)
-
-			if bomb_is_deployed==true then
-				local b
-				for b in all(game_objects) do
-					if b.name == "bomb" and b.exploding==true and b:check_for_collision_with_other_object(self)==true then
-						self.dying=true
-					end
-				end
-			end
 
 		end,
 		draw=function(self)
