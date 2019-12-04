@@ -82,6 +82,7 @@ function make_game_object(x,y,width,height,properties)
 		y=y,
 		width=width,
 		height=height,
+		dying=false,
 		draw=function(self)
 		end
 	}
@@ -352,6 +353,12 @@ function make_bomb(x,y,dropped_while_player_facing)
 
 		end
 	})
+
+	for e in all(game_objects) do
+		if e.name=="enemy" and are_object_rects_colliding(e,bomb) then
+			e.bomb_placed_on_enemy = true
+		end
+	end
 	
 	return bomb
 
@@ -366,7 +373,7 @@ function make_enemy(x,y,width,height)
 		movement_dir=0,
 		facing_right=false,
 		speed=0.5,
-		dying=false,
+		bomb_placed_on_enemy=false,
 		update=function(self)
 
 			if self.dying==true then
@@ -394,7 +401,9 @@ function make_enemy(x,y,width,height)
 			local wall
 			for wall in all(game_objects) do
 				if (wall.name=="wall" or wall.name=="bomb") and are_object_rects_colliding(wall,self) then
-					if self.movement_dir==0 then
+					if wall.name=="bomb" and self.bomb_placed_on_enemy==true then
+						return
+					elseif self.movement_dir==0 then
 						self.x += self.speed
 						self.movement_dir = 1
 					elseif self.movement_dir==1 then
@@ -409,6 +418,8 @@ function make_enemy(x,y,width,height)
 					end
 				end
 			end
+
+			self.bomb_placed_on_enemy=false
 
 		end,
 		check_for_being_exploded=function(self)
