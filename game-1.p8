@@ -156,7 +156,10 @@ function make_protag(x,y,width,height)
 					bomb_y = self.y + 8
 				end
 
-				add(bombs, make_bomb(bomb_x,bomb_y,self.facing))
+				if bomb_is_deployed == false then
+					add(bombs, make_bomb(bomb_x,bomb_y,self.facing))
+					bomb_is_deployed = true
+				end
 			end
 
 		end,
@@ -305,6 +308,7 @@ function make_bomb(x,y,dropped_while_player_facing)
 				if self.seconds_since_bomb_deployed>=5 then
 					del(bombs, self)
 					del(game_objects, self)
+					bomb_is_deployed = false
 				end
 			elseif self.seconds_since_bomb_deployed==4 then
 				self.exploding = true
