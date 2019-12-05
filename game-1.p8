@@ -94,6 +94,7 @@ function make_game_object(x,y,width,height,properties)
 		width=width,
 		height=height,
 		dying=false,
+		death_frame_counter=0,
 		check_for_being_exploded=function(self)
 
 			if bomb_is_deployed==true then
@@ -106,6 +107,19 @@ function make_game_object(x,y,width,height,properties)
 			end
 
 		end,
+		check_for_dead=function(self)
+
+			if self.dying==false then
+				return
+			end
+			if self.death_frame_counter==60 then
+				self.dying=false
+				self.death_frame_counter=0
+			else
+				self.death_frame_counter += 1
+			end
+
+		end
 	}
 
 	local k,v
@@ -138,6 +152,7 @@ function make_protag(x,y,width,height)
 		update=function(self)
 
 			if self.is_stuck == true or self.dying==true then
+				self:check_for_dead()
 				return
 			end
 
@@ -400,6 +415,7 @@ function make_enemy(x,y,width,height)
 		update=function(self)
 
 			if self.dying==true then
+				self:check_for_dead()
 				return
 			end
 
