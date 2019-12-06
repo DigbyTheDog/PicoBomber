@@ -119,6 +119,9 @@ function make_game_object(x,y,width,height,properties)
 			if self.death_frame_counter==60 then
 				self.dying=false
 				self.death_frame_counter=0
+				if self.name=="enemy" then
+					del(game_objects,self)
+				end
 			else
 				self.death_frame_counter += 1
 			end
@@ -165,22 +168,39 @@ function make_protag(x,y,width,height)
 			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
 			-- TODO: it feels bad to stop when two keys are held, actually.
 			self.moving=false
-			if btn(0) and not (btn(1) or btn(2) or btn(3)) then -- left
+			if btn(0) and (self.y%8==0) and not (btn(1) or btn(2) or btn(3)) then -- left
 				self.facing = 0
 				self.moving = true
 				self.x -= 1
-			elseif btn(1) and not (btn(0) or btn(2) or btn(3)) then -- right
+			elseif btn(1) and (self.y%8==0) and not (btn(0) or btn(2) or btn(3)) then -- right
 				self.facing = 1
 				self.moving = true
 				self.x += 1
-			elseif btn(3) and not (btn(1) or btn(2) or btn(0)) then -- down
+			elseif btn(3) and (self.x%8==0) and not (btn(1) or btn(2) or btn(0)) then -- down
 				self.facing = 3
 				self.moving = true
 				self.y += 1
-			elseif btn(2) and not (btn(0) or btn(1) or btn(3)) then -- up
+			elseif btn(2) and (self.x%8==0) and not (btn(0) or btn(1) or btn(3)) then -- up
 				self.facing = 2
 				self.moving = true
 				self.y -= 1
+			end
+
+			if self.moving==false then
+				if not (self.x%8 == 0) then
+					if self.facing==0 then
+						self.x -= 1
+					else
+						self.x += 1
+					end
+				end
+				if not (self.y%8 == 0) then
+					if self.facing==2 then
+						self.y -= 1
+					else
+						self.y += 1
+					end
+				end
 			end
 						
 			if btnp(4) then -- space ?
@@ -457,9 +477,11 @@ function make_enemy(x,y,width,height)
 					elseif self.movement_dir==0 then
 						self.x += self.speed
 						self.movement_dir = 1
+						facing_right = false
 					elseif self.movement_dir==1 then
 						self.x -= self.speed
-						self.movement_dir = 0				
+						self.movement_dir = 0
+						facing_right = true				
 					elseif self.movement_dir==2 then
 						self.y += self.speed
 						self.movement_dir = 3
