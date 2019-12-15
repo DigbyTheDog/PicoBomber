@@ -10,6 +10,7 @@ local bomb_is_deployed = false
 local global_timer = 0
 local cam
 local game_state = "menu"
+local test_rect
 
 function _init()
 
@@ -36,6 +37,8 @@ function _init()
 		x=player.x-64,
 		y=player.y-64
 	}
+
+	test_rect=create_sprite_rect(player.x-10,player.y-10,player.x+50,player.y+50,10,10)
 
 end
 
@@ -100,6 +103,9 @@ function draw_game()
 			obj:draw()
 		end
 	end
+
+	test_rect:draw()
+	sspr(0,24,8,8,test_rect.ulx,test_rect.uly,test_rect.lrx-test_rect.ulx,test_rect.lry-test_rect.uly)
 
 end
 
@@ -178,6 +184,47 @@ function are_object_rects_colliding(first,second)
 
 end
 
+function create_sprite_rect(x0, y0, x1, y1, shrink_bound, grow_bound)
+
+	local rect = {
+		x0=x0,
+		y0=y0,
+		x1=x1,
+		y1=y1,
+		increase_num=0,
+		growing_or_shrinking="growing",
+		ulx=x0,
+		uly=y0,
+		lrx=x1,
+		lry=y1,
+		draw=function(self)
+
+			local num_to_add=1
+			if self.growing_or_shrinking=="shrinking" then
+				num_to_add=-1
+			end
+			self.increase_num=self.increase_num+num_to_add
+
+			if self.increase_num==grow_bound and self.growing_or_shrinking=="growing" then
+				self.growing_or_shrinking="shrinking"
+			elseif -(self.increase_num)==shrink_bound and self.growing_or_shrinking=="shrinking" then
+				self.growing_or_shrinking="growing"
+			end
+
+			self.ulx=self.x0-self.increase_num
+			self.uly=self.y0-self.increase_num
+			self.lrx=self.x1+self.increase_num
+			self.lry=self.y1+self.increase_num
+
+			rect(self.ulx,self.uly,self.lrx,self.lry,7)
+
+		end
+	}
+
+	return rect
+
+end
+
 -- Currently Unused
 function for_each_game_object(name,callback)
 
@@ -238,6 +285,7 @@ function make_game_object(x,y,width,height,properties)
 
 end
 
+-- TODO: Is this stupid?
 function make_shaded_floor(x,y)
 
 	local tile = {
