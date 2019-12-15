@@ -10,7 +10,6 @@ local bomb_is_deployed = false
 local global_timer = 0
 local cam
 local game_state = "menu"
-local test_rect
 
 function _init()
 
@@ -37,8 +36,6 @@ function _init()
 		x=player.x-64,
 		y=player.y-64
 	}
-
-	test_rect=create_sprite_rect(player.x-10,player.y-10,player.x+50,player.y+50,10,10)
 
 end
 
@@ -103,9 +100,6 @@ function draw_game()
 			obj:draw()
 		end
 	end
-
-	test_rect:draw()
-	sspr(0,24,8,8,test_rect.ulx,test_rect.uly,test_rect.lrx-test_rect.ulx,test_rect.lry-test_rect.uly)
 
 end
 
@@ -184,6 +178,8 @@ function are_object_rects_colliding(first,second)
 
 end
 
+--test_rect:draw()
+--sspr(0,24,8,8,test_rect.ulx,test_rect.uly,test_rect.lrx-test_rect.ulx,test_rect.lry-test_rect.uly)
 function create_sprite_rect(x0, y0, x1, y1, shrink_bound, grow_bound)
 
 	local rect = {
@@ -197,7 +193,7 @@ function create_sprite_rect(x0, y0, x1, y1, shrink_bound, grow_bound)
 		uly=y0,
 		lrx=x1,
 		lry=y1,
-		draw=function(self)
+		update=function(self)
 
 			local num_to_add=1
 			if self.growing_or_shrinking=="shrinking" then
@@ -215,8 +211,6 @@ function create_sprite_rect(x0, y0, x1, y1, shrink_bound, grow_bound)
 			self.uly=self.y0-self.increase_num
 			self.lrx=self.x1+self.increase_num
 			self.lry=self.y1+self.increase_num
-
-			rect(self.ulx,self.uly,self.lrx,self.lry,7)
 
 		end
 	}
@@ -514,6 +508,7 @@ function make_bomb(x,y,dropped_while_player_facing)
 		dropped_while_player_facing=dropped_while_player_facing,
 		exploding=false,
 		colliding_with_wall=false,
+		growth_rect=create_sprite_rect(x,y,x+8,y+8,0,2),
 		update=function(self)
 
 			player_x_orig = player.x
@@ -583,7 +578,15 @@ function make_bomb(x,y,dropped_while_player_facing)
 				spr(34,self.x,self.y+8)
 				spr(34,self.x,self.y-8)
 			else 
-				spr(32,self.x,self.y)
+				if global_timer%2==1 then
+					self.growth_rect:update()
+					self.growth_rect.x0=self.x
+					self.growth_rect.x1=self.x+8
+					self.growth_rect.y0=self.y
+					self.growth_rect.y1=self.y+8
+				end
+
+				sspr(0,16,8,8,self.growth_rect.ulx,self.growth_rect.uly,self.growth_rect.lrx-self.growth_rect.ulx,self.growth_rect.lry-self.growth_rect.uly)
 			end	
 
 		end,
