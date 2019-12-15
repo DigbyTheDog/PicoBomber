@@ -636,6 +636,7 @@ function make_enemy(x,y,width,height)
 		bomb_placed_on_enemy=false,
 		orig_dir=0,
 		changed_dir=false,
+		growth_rect=create_sprite_rect(x,y,x+8,y+8,1,4),
 		update=function(self)
 
 			if self.dying==true then
@@ -691,7 +692,20 @@ function make_enemy(x,y,width,height)
 				end
 			end
 
-			spr(self.current_sprite,self.x,self.y,1,1,self.facing_right)
+			if self.dying==true then
+				self.growth_rect:update()
+				self.growth_rect.x0=self.x
+				self.growth_rect.x1=self.x+8
+				self.growth_rect.y0=self.y
+				self.growth_rect.y1=self.y+8
+				if self.current_sprite==3 then
+					sspr(48,0,8,8,self.growth_rect.ulx,self.growth_rect.uly,self.growth_rect.lrx-self.growth_rect.ulx,self.growth_rect.lry-self.growth_rect.uly,self.facing_right)
+				else
+					sspr(40,0,8,8,self.growth_rect.ulx,self.growth_rect.uly,self.growth_rect.lrx-self.growth_rect.ulx,self.growth_rect.lry-self.growth_rect.uly,self.facing_right)
+				end
+			else
+				spr(self.current_sprite,self.x,self.y,1,1,self.facing_right)
+			end
 
 		end,
 		restore_dir=function(self)
@@ -876,7 +890,7 @@ __map__
 0c0c0c0c0c0c0c0c0c0c0c0c010001010100010001000100010001000100010001000100010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 0c0c0c0c0c0c0c0c0c0c0c0c010002020200110002001100030002001100020002000226010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 0c0c0c0c0c0c0c0c0c0c0c0c010001000100011101110111011101000100010001000101010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
-0c0c0c0c0c0c0c0c0c0c0c0c010002000211022402240224020202000200020002000202010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
+0c0c0c0c0c0c0c0c0c0c0c0c010002000211022402240224022a02000200020002000202010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 0c0c0c0c0c0c0c0c0c0c0c0c010001000100010001000100010001000111011101000100010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 0c0c0c0c0c0c0c0c0c0c0c0c01000200020002030200021102110203022a022a02000200010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 0c0c0c0c0c0c0c0c0c0c0c0c010001000100010001000100012401000100010001000111010c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
