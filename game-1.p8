@@ -21,11 +21,16 @@ function _init()
 			if mget(i,j)==17 then
 				make_wall(i*8,j*8,8,8,true)
 			end
-			if mget(i,j)==3 then
-				make_enemy(i*8,j*8,8,8)
-			end
 			if mget(i,j)==2 then
 				make_shaded_floor(i*8,j*8)
+			end
+		end
+	end
+	-- make enemies last so their animation isnt blocked
+	for i=0,200,1 do 
+		for j=0,200,1 do
+			if mget(i,j)==3 then
+				make_enemy(i*8,j*8,8,8)
 			end
 		end
 	end
@@ -239,6 +244,7 @@ function make_game_object(x,y,width,height,properties)
 		width=width,
 		height=height,
 		dying=false,
+		dead=false,
 		death_frame_counter=0,
 		check_for_being_exploded=function(self)
 
@@ -262,6 +268,8 @@ function make_game_object(x,y,width,height,properties)
 				self.death_frame_counter=0
 				if self.name=="enemy" then
 					del(game_objects,self)
+				else
+					self.dead=true
 				end
 			else
 				self.death_frame_counter += 1
@@ -308,33 +316,59 @@ function make_protag(x,y,width,height)
 		is_stuck=false,
 		moving=false,
 		current_sprite=58,
+		sprite_ascending=true,
+		frame_timer=0,
 		draw=function(self)
 
 			if self.is_stuck == true then
 				print("oh no!",self.x+self.width+2,self.y-4,7)
 			end
 
+			if self.is_stuck == true or self.dying==true then
+				self:animate_dying()
+			end
+
 			spr(self.current_sprite-16,self.x,self.y-8)
 			spr(self.current_sprite,self.x,self.y)
 
 		end,
-		check_for_dead=function(self)
+		animate_dying=function(self)
 
-			game_state="dead"
+			if self.frame_timer==29 then
+				self.frame_timer=0
+			else 
+				self.frame_timer += 1
+			end
+
+			if self.current_sprite==58 then
+				self.current_sprite=29
+			elseif self.current_sprite==29 and self.frame_timer==09 then
+				self.current_sprite=30
+			elseif self.current_sprite==30 and self.frame_timer==19 then
+				self.current_sprite=31
+			elseif self.current_sprite==31 and self.frame_timer==29 then
+				self.current_sprite=30
+			elseif self.current_sprite==30 and self.frame_timer==09 then
+				self.current_sprite=29
+			end			
 
 		end,
 		update=function(self)
 
-			if self.is_stuck == true or self.dying==true then
-				self:check_for_dead()
+			if self.dead==true then
+				game_state="dead"
 				return
 			end
 
 			self:check_for_being_exploded()
+
+			if self.is_stuck==true or self.dying==true then
+				self:check_for_dead()
+				return
+			end
+
 			self:check_for_collision_with_enemy()
 
-			-- In a bomberman-type game, it's weird if you can move diag, so limit to one direction at a time.
-			-- TODO: it feels bad to stop when two keys are held, actually.
 			self.moving=false
 			if btn(0) and (self.y%8==0) and not (btn(1) or btn(2) or btn(3)) then -- left
 				self.facing = 0
@@ -398,7 +432,7 @@ function make_protag(x,y,width,height)
 
 			local e
 			for e in all(game_objects) do
-				if e.name=="enemy" and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e)==true then
+				if e.name=="enemy" and (not e.dying) and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e)==true then
 					self.dying=true
 				end
 			end
@@ -747,8 +781,8 @@ __gfx__
 0007700015111151353535350766000707667007044446000406000002444000000000000000000000000d0000000000eeeeeeee076666700766667007666670
 007007001511115133333333766677767666677676666777400600070407000700000000000000000d00000000000d00eeeeeeee7666666776666667755ff557
 0000000011555511333333336666666066666660066666660077777640070076000d0000000000e00000000000000000eeeeeeee7666666776666667ccffffcc
-000000001111111133333333066666000666660000666660006666600066666000000000000000000000000000000000eeeeeeee67766776655ff556cf2222fc
-000777006666606600000000000000000000000000000000000000000000000000000000000000000000000000000000c000000c75577557ccffffccc222222c
+000000001111111133333333066666000666660000666660006666600066666000000000000000000000000000000000eeeeeeee66666666655ff556cf2222fc
+000777006666606600000000000000000000000000000000000000000000000000000000000000000000000000000000c000000c77777777ccffffccc222222c
 007000700d5505dd0088800000777000007770000077700000777000007770000077700000777000000000000c0000c00c0000c0c55ff55ccf2222fcc222222c
 00220009d000115d099606000888880007770700077707000777070007770700077707000777070000c00c0000c00c0000c00c00cc2222ccc222222cc222222c
 02888000d511000d9999600099996000888880007777700077777000777770007777700077777000000000000000000000000000c228822cc228822cc228822c
