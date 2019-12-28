@@ -2,23 +2,23 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
-local player
-local bomb
-local game_objects={}
-local background_tiles={}
-local bomb_is_deployed = false
-local current_level=1
-local levels={}
-local global_timer=0
-local cam
-local game_state="menu"
+player=nil
+bomb=nil
+game_objects={}
+background_tiles={}
+bomb_is_deployed=false
+current_level=1
+levels={}
+global_timer=0
+cam=nil
+game_state="menu"
 
 function _init()
 
 	init_levels()
 	load_level(1)
 
-	player=make_protag(128,128,8,8)
+	player=make_protag(levels[current_level].player_spawn_x,levels[current_level].player_spawn_y,8,8)
 
 	cam={
 		x=player.x-64,
@@ -33,6 +33,8 @@ function _update()
 		update_menu()
 	elseif game_state=="game" then
 		update_game()
+	elseif game_state=="level complete" then
+		update_level_complete()
 	end
 
 	update_camera()
@@ -115,21 +117,31 @@ function update_game()
 
 end
 
+level_complete_frame_counter = 0
+function update_level_complete()
+	
+	level_complete_frame_counter+=1
+	if level_complete_frame_counter==120 then
+		current_level=current_level+1
+		level_complete_frame_counter=0
+		load_level(current_level)
+		player=make_protag(levels[current_level].player_spawn_x,levels[current_level].player_spawn_y,8,8)
+		game_state="game"
+	end
+
+end
+
 function init_levels()
 
 	make_level(1,0,38,0,28,128,128)
+	make_level(2,8,20,42,58,72,344)
 	
 end
 
 function load_level(level_number)
 
-	local level_to_load
-	for level in all(levels) do
-		if level.level_number==level_number then
-			level_to_load=level
-		end
-	end
-	print(level_to_load.level_number)
+	game_objects={}
+	local level_to_load=levels[level_number]
 
 	for i=level_to_load.lower_bound_x,level_to_load.upper_bound_x,1 do 
 		for j=level_to_load.lower_bound_y,level_to_load.upper_bound_y,1 do
@@ -787,6 +799,20 @@ function make_enemy(x,y,width,height)
 
 end
 
+function make_timer_object(frames_to_count_down)
+
+	local timer_object = {
+
+		starting_time = global_timer
+
+
+
+	}
+
+	return timer_object
+
+end
+
 __gfx__
 000000006666666600000000000000000077700000000000900777000000000000000000000000000000000000000000eeeeeeee000000000000000000000000
 00000000dd5555dd5050505000777000094656000000000009075700900777000d00000000000000000000000d000000eeeeeeee000000000000000000000000
@@ -851,7 +877,7 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000032
 c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0
 c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0
 c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0
