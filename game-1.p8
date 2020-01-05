@@ -575,7 +575,6 @@ function make_protag(x,y,width,height)
 				end
 
 				if bomb_is_deployed == false then
-					sfx(1)
 					bomb = make_bomb(bomb_x,bomb_y,self.facing)
 					bomb_is_deployed = true
 				end
@@ -753,7 +752,6 @@ function make_bomb(x,y,dropped_while_player_facing)
 					bomb = nil
 				end
 			elseif self.seconds_since_bomb_deployed==3 then
-				sfx(0)
 				self.exploding = true
 			end
 
