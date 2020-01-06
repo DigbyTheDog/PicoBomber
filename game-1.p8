@@ -3,7 +3,6 @@ version 18
 __lua__
 
 player=nil
-bomb=nil
 game_objects={}
 background_tiles={}
 bomb_is_deployed=false
@@ -688,7 +687,7 @@ function make_protag(x,y,width,height)
 
 			local e
 			for e in all(game_objects) do
-				if e.name=="enemy" and (not e.dying) and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e)==true and (not self.invincible) then
+				if e.name=="enemy" and (not e.dying) and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e.hitbox)==true and (not self.invincible) then
 					self.dying=true
 				end
 			end
@@ -932,6 +931,7 @@ function make_enemy(x,y,width,height)
 		orig_dir=0,
 		changed_dir=false,
 		growth_rect=create_sprite_rect(x,y,x+8,y+8,1,4),
+		hitbox={x=x+2,y=y+2,width=3,height=2}, 
 		update=function(self)
 
 			if self.dying==true then
@@ -975,6 +975,9 @@ function make_enemy(x,y,width,height)
 			end
 
 			self.bomb_placed_on_enemy=false
+
+			self.hitbox.x=self.x+2
+			self.hitbox.y=self.y+3
 
 		end,
 		draw=function(self)
