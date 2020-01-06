@@ -483,6 +483,7 @@ function make_protag(x,y,width,height)
 			end
 
 			if self.is_stuck==true or self.dying==true or self.dead==true then
+				self.moving=false
 				self:animate_dying()
 			elseif self.facing==3 then 
 				if self.moving==true then
@@ -540,9 +541,9 @@ function make_protag(x,y,width,height)
 				end
 			end
 			if self.moving==true then
-				if self.head_bobbing_timer==4 then
+				if self.head_bobbing_timer==3 then
 					self.head_bobbing_timer_asc_or_desc="desc"
-					self.head_bobbing_timer=3
+					self.head_bobbing_timer=2
 				elseif self.head_bobbing_timer==-1 then
 					self.head_bobbing_timer_asc_or_desc="asc"
 					self.head_bobbing_timer=0
