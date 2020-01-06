@@ -476,6 +476,9 @@ function make_protag(x,y,width,height)
 		head_bobbing_timer_asc_or_desc="asc",
 		head_bobbing_timer=0,
 		sprite_flipped=false,
+		lives=3,
+		invincible=false,
+		invincible_timer=0,
 		draw=function(self)
 
 			if self.is_stuck == true then
@@ -558,8 +561,10 @@ function make_protag(x,y,width,height)
 				self.head_bobbing_timer=0
 			end
 
-			spr(self.current_sprite,self.x,self.y,1,1,self.sprite_flipped)
-			spr(self.current_sprite-16,self.x,(self.y-8)+(self.head_bobbing_timer*.3),1,1,self.sprite_flipped)
+			if self.invincible==false or global_timer%2==0 then
+				spr(self.current_sprite,self.x,self.y,1,1,self.sprite_flipped)
+				spr(self.current_sprite-16,self.x,(self.y-8)+(self.head_bobbing_timer*.3),1,1,self.sprite_flipped)
+			end
 
 			if self.walk_frame_timer==13 then
 				self.walk_frame_timer=0
@@ -590,13 +595,27 @@ function make_protag(x,y,width,height)
 		update=function(self)
 
 			if self.dead==true then
-				game_state="dead"
-				return
+				self.lives-=1
+				if self.lives==0 then
+					game_state="dead"
+					return
+				else
+					self.dead=false
+					self.invincible=true
+				end
+			end
+
+			if self.invincible==true then
+				self.invincible_timer+=1
+				if self.invincible_timer==90 then
+					self.invincible=false
+					self.invincible_timer=0
+				end
 			end
 
 			self:check_for_being_exploded()
 
-			if self.is_stuck==true or self.dying==true then
+			if self.is_stuck==true or self.dying==true and (not self.invincible) then
 				self:check_for_dead()
 				return
 			end
@@ -669,13 +688,13 @@ function make_protag(x,y,width,height)
 
 			local e
 			for e in all(game_objects) do
-				if e.name=="enemy" and (not e.dying) and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e)==true then
+				if e.name=="enemy" and (not e.dying) and abs(e.x - self.x) < 30 and abs(e.y - self.y) < 30 and are_object_rects_colliding(self,e)==true and (not self.invincible) then
 					self.dying=true
 				end
 			end
 
 		end,
-		check_for_collision_with_wall = function(self,wall)
+		check_for_collision_with_wall=function(self,wall)
 
 			local x,y,w,h = self.x,self.y,self.width,self.height
 
@@ -1023,7 +1042,7 @@ __gfx__
 00700700151111513333333376667776766667767666677740060007040700070888900000e0020e000ff000006dd600eeeeeeee7666666776666667755ff557
 0000000011555511333333336666666066666660066666660077777640070076098900000e0220000000000000066000eeeeeeee7666666776666667ccffffcc
 000000001111111133333333066666000666660000666660006666600066666000900000e00000000000000000000000eeeeeeee66666666655ff556cf2222fc
-000777000666600600000000000000000000000000000000000000000000000000000000000000000000000000000000c000000c77777777ccffffccc222222c
+000777000666600600000000000000000000000000000000000000000000000000000000000000000000000000000000c000000c66666666ccffffccc222222c
 00700070005500dd0088800000777000007770000077700000777000007770000077700000777000000000000c0000c00c0000c0c55ff55ccf2222fcc222222c
 00220009d000115d099606000888880007770700077707000777070007770700077707000777070000c00c0000c00c0000c00c00cc2222ccc222222cc222222c
 02888000d51100009999600099996000888880007777700077777000777770007777700077777000000000000000000000000000c228822cc228822cc228822c
