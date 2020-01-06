@@ -15,18 +15,7 @@ sky=nil
 
 function _init()
 
-	init_levels()
-	load_level(1)
-
-	player=make_protag(levels[current_level].player_spawn_x,levels[current_level].player_spawn_y,8,8)
-
-	cam={
-		x=player.x-64,
-		y=player.y-64
-	}
-
-	local cur_level=levels[1]
-	sky=init_sky(cur_level.lower_bound_x*8,cur_level.lower_bound_y*8,(cur_level.upper_bound_x*8)+100,(cur_level.upper_bound_y*8)+100,750)
+	init_game()
 
 end
 
@@ -38,6 +27,12 @@ function _update()
 		update_game()
 	elseif game_state=="paused" then
 		update_pause()
+	elseif game_state=="dead" then
+		if btnp(4) then
+			camera(0, 0)
+			game_state="menu"
+			init_game()
+		end
 	elseif game_state=="level complete" then
 		update_level_complete()
 	end
@@ -59,6 +54,25 @@ function _draw()
 	elseif game_state=="level complete" then
 		draw_text_box("rock on!!!",7)
 	end
+
+end
+
+function init_game() 
+
+	levels={}
+	init_levels()
+	load_level(1)
+
+	player=make_protag(levels[current_level].player_spawn_x,levels[current_level].player_spawn_y,8,8)
+
+	cam={
+		x=player.x-64,
+		y=player.y-64
+	}
+
+	local cur_level=levels[1]
+	sky=init_sky(cur_level.lower_bound_x*8,cur_level.lower_bound_y*8,(cur_level.upper_bound_x*8)+100,(cur_level.upper_bound_y*8)+100,750)
+
 
 end
 
