@@ -480,9 +480,8 @@ function make_protag(x,y,width,height)
 				print("oh no!",self.x+self.width+2,self.y-4,7)
 			end
 
-			if self.is_stuck == true or self.dying==true or self.dead==true then
+			if self.is_stuck==true or self.dying==true or self.dead==true then
 				self:animate_dying()
-				self.sprite_flipped=false
 			elseif self.facing==3 then 
 				if self.moving==true then
 					if self.walk_frame_timer==3 then 
@@ -554,7 +553,7 @@ function make_protag(x,y,width,height)
 				self.death_frame_timer += 1
 			end
 
-			if self.current_sprite==58 then
+			if self.current_sprite>50 then
 				self.current_sprite=29
 			elseif self.current_sprite==29 and self.death_frame_timer==09 then
 				self.current_sprite=30
