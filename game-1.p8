@@ -473,6 +473,8 @@ function make_protag(x,y,width,height)
 		sprite_ascending=true,
 		death_frame_timer=0,
 		walk_frame_timer=0,
+		head_bobbing_timer_asc_or_desc="asc",
+		head_bobbing_timer=0,
 		sprite_flipped=false,
 		draw=function(self)
 
@@ -537,8 +539,26 @@ function make_protag(x,y,width,height)
 					self.current_sprite=62
 				end
 			end
-			spr(self.current_sprite-16,self.x,self.y-8,1,1,self.sprite_flipped)
+			if self.moving==true then
+				if self.head_bobbing_timer==4 then
+					self.head_bobbing_timer_asc_or_desc="desc"
+					self.head_bobbing_timer=3
+				elseif self.head_bobbing_timer==-1 then
+					self.head_bobbing_timer_asc_or_desc="asc"
+					self.head_bobbing_timer=0
+				end
+
+				if self.head_bobbing_timer_asc_or_desc=="asc" then
+					self.head_bobbing_timer+=1
+				else
+					self.head_bobbing_timer-=1
+				end
+			else 
+				self.head_bobbing_timer=0
+			end
+
 			spr(self.current_sprite,self.x,self.y,1,1,self.sprite_flipped)
+			spr(self.current_sprite-16,self.x,(self.y-8)+(self.head_bobbing_timer*.3),1,1,self.sprite_flipped)
 
 			if self.walk_frame_timer==13 then
 				self.walk_frame_timer=0
